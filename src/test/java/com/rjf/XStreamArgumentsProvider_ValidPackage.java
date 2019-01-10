@@ -13,7 +13,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 
-public class XStreamArgumentsProvider implements ArgumentsProvider {
+public class XStreamArgumentsProvider_ValidPackage implements ArgumentsProvider {
     private static final PureJavaReflectionProvider reflectionProvider = new PureJavaReflectionProvider();
     private static final ClassLoader classLoader = XStream.class.getClassLoader();
     private static final ClassLoaderReference classLoaderRef = new ClassLoaderReference(classLoader);
