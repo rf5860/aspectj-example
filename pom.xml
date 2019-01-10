@@ -39,50 +39,140 @@
   </developers>
 
   <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>1.8</java.version>
+    <project.build.source>${java.version}</project.build.source>
+    <project.build.target>${java.version}</project.build.target>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <junit.jupiter.version>5.3.2</junit.jupiter.version>
+    <aspectj.version>1.9.2</aspectj.version>
+    <xstream.version>1.4.11.1</xstream.version>
+    <jetbrains.annotations.version>16.0.3</jetbrains.annotations.version>
+    <commons.collections.version>4.2</commons.collections.version>
   </properties>
 
   <dependencies>
+    <!-- Facilitates aspects added by AspectJ compilation -->
     <dependency>
       <groupId>org.aspectj</groupId>
-      <artifactId>aspectjweaver</artifactId>
-      <version>1.9.2</version>
+      <artifactId>aspectjrt</artifactId>
+      <version>${aspectj.version}</version>
     </dependency>
+    <!-- Provides the ajc compiler and other tools -->
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjtools</artifactId>
+      <version>${aspectj.version}</version>
+    </dependency>
+    <!-- Arbitrary third-party library used for experimenting with Aspects -->
     <dependency>
       <groupId>com.thoughtworks.xstream</groupId>
       <artifactId>xstream</artifactId>
-      <version>1.4.11.1</version>
+      <version>${xstream.version}</version>
+    </dependency>
+    <!-- The JUnit5 API is used for writing tests -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- The JUnit5 engine is used for running the tests -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Allows for parameterised tests under JUnit 5 -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>${junit.jupiter.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- Nullability annotations from JetBrains (Useful for static analysis) -->
+    <dependency>
+      <groupId>org.jetbrains</groupId>
+      <artifactId>annotations</artifactId>
+      <version>${jetbrains.annotations.version}</version>
+      <scope>compile</scope>
+    </dependency>
+    <!-- Utility methods for Collections -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>${commons.collections.version}</version>
     </dependency>
   </dependencies>
 
   <build>
     <plugins>
+      <!-- Enforce Maven 3.6.0 or greater for JUnit 5 -->
       <plugin>
-        <groupId>com.github.github</groupId>
-        <artifactId>downloads-maven-plugin</artifactId>
-        <version>0.6</version>
-        <configuration>
-          <description>Release${project.version} of ${project.name}</description>
-          <override>true</override>
-          <includeAttached>true</includeAttached>
-          <server>github</server>
-        </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>1.4.1</version>
         <executions>
           <execution>
-            <goals><goal>upload</goal></goals>
-            <phase>install</phase>
+            <id>enforce-maven-3</id>
+            <goals><goal>enforce</goal></goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion><version>3.6.0</version></requireMavenVersion>
+              </rules>
+            </configuration>
           </execution>
         </executions>
       </plugin>
+      <!-- Adds a step in the maven lifecycle for weaving aspects -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>aspectj-maven-plugin</artifactId>
+        <version>1.11</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjtools</artifactId>
+            <version>${aspectj.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <complianceLevel>${java.version}</complianceLevel>
+          <showWeaveInfo>true</showWeaveInfo>
+          <verbose>false</verbose>
+          <Xlint>ignore</Xlint>
+          <encoding>${project.build.sourceEncoding}</encoding>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+          <weaveDependencies>
+            <weaveDependency>
+              <groupId>com.thoughtworks.xstream</groupId>
+              <artifactId>xstream</artifactId>
+            </weaveDependency>
+          </weaveDependencies>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>test-compile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- For compiling source in he project -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.0</version>
       </plugin>
+      <!-- Adds the capability ot build jars -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
+        <version>3.1.1</version>
         <configuration>
           <archive>
             <manifest>
@@ -92,15 +182,25 @@
           </archive>
         </configuration>
       </plugin>
+      <!-- For the generation of javadoc -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.0.1</version>
         <executions><execution><goals><goal>jar</goal></goals></execution></executions>
       </plugin>
+      <!-- For the creation of a .jar of the source code-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
+        <version>3.0.1</version>
         <executions><execution><goals><goal>jar</goal></goals></execution></executions>
+      </plugin>
+      <!-- For running tests -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.0</version>
       </plugin>
     </plugins>
   </build>
