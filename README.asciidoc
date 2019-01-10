@@ -1,0 +1,119 @@
+= AspectJ Example
+:source-highlighter: coderay
+
+== AspectJ Example
+
+This is a toy / sandbox project serving as a quick introduction on using AspectJ. It shows how to inject code for an arbitrary constructor in a third-party library.
+
+=== Overview
+
+https://en.wikipedia.org/wiki/Aspectj[AspectJ] is a library for https://en.wikipedia.org/wiki/Aspect-oriented_programming[Aspect-Oriented Programming (AOP)]
+
+Often, there is need to have code in several places, which aren't related to the business logic of any of them, such as logging or auditing. These are known as `Cross-cutting concerns`.
+
+Aspect-oriented programming (AOP) is a way to isolate cross-cutting concerns from core business logic, by allows existing code to be extended, without the need to directly modify that code.
+
+Modules containing these modifications are known `aspects`; isolated code, which captures concerns that cut across multiple objects. An `aspect` contains code which extends other parts of the program. These pieces of code are known as `advice`.
+
+The details of when each `advice` should run is known a `pointcut`. A `pointcut` matches on one or more specific parts of a program. These specific parts are known as `join points`
+
+=== Example
+
+The class `com.rjf.XStreamCreationAspect` intercepts all public `XStream` constructor calls, and initialises defalut security.
+
+Tests for this are in `com.rjf.XStreamCreationAspectTest`.
+
+Tests can eb run either via IDE, or with Maven, with `mvn clean test`
+
+=== Setup
+
+These steps outline how to add aspects for third party jars, using `XStream` as an example.
+
+==== Maven
+
+This part is already done for this project, but the necessary steps for configuring a new project are detailed below.
+
+===== Dependencies
+
+.pom.xml
+[source,xml]
+----
+<dependencies>
+  <!-- Third party library to add Aspects to -->
+  <dependency>
+    <groupId>com.thoughtworks.xstream</groupId>
+    <artifactId>xstream</artifactId>
+    <version>${xstream.version}</version>
+  </dependency>
+  <!-- To use AspectJ -->
+  <dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjrt</artifactId>
+    <version>1.9.2</version>
+  </dependency>
+  <!-- For the ajc compiler, and post-compile & load-time weaving -->
+  <dependency>
+    <groupId>org.aspectj</groupId>
+    <artifactId>aspectjtools</artifactId>
+    <version>1.9.2</version>
+  </dependency>
+</dependencies>
+----
+
+===== Maven Plugins
+
+.pom.xml
+[source,xml]
+----
+<plugin>
+  <groupId>org.codehaus.mojo</groupId>
+  <artifactId>aspectj-maven-plugin</artifactId>
+  <version>1.11</version>
+  <dependencies>
+    <dependency>
+      <groupId>org.aspectj</groupId>
+      <artifactId>aspectjtools</artifactId>
+      <version>${aspectj.version}</version>
+    </dependency>
+  </dependencies>
+  <executions>
+    <execution>
+      <goals>
+        <goal>compile</goal>
+        <goal>test-compile</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+----
+
+==== IntelliJ
+
+- Open Preferences (`⌘,` on Mac)
+- Select `Build, Execution, Deployment ➙ Java Compiler`
+  - Set `Use compiler` to `Ajc`
+  - Set `Path to Ajc compiler` to a copy of `aspectjtools` (From local Maven Cache) +
+  E.g. `~/.m2/repository/org/aspectj/aspectjtools/1.9.2/aspectjtools-1.9.2.jar` +
+  Confirm it's working with the `Test` button
+  - Tick `Delegate to Javac`
+  - Set `Command line parameters` to: `-Xlint:ignore -showWeaveInfo -inpath ~/.m2/repository/com/thoughtworks/xstream/xstream/1.4.11/xstream-1.4.11.jar` +
+  (Remember to change the `.jar` location if using a different library)
+
+image::docs/IntelliJ-Compiler-Settings.png[]
+
+- Open Module Setting (`⌘;` on Mac)
+- Select `Modules`, and click Add Facet (image:docs/add-facet.png[])
+- Click `AspectJ`
+- Ensure `Post-compile weave mode` is *not* ticked
+
+image::docs/IntelliJ-AspectJFacet.png[]
+
+=== Useful Links & Further Reading
+
+- https://www.eclipse.org/aspectj/doc/released/progguide/starting-development.html[Getting Started with - eclipse.org]
+- https://www.eclipse.org/aspectj/doc/released/progguide/semantics-pointcuts.html[Pointcuts in AspectJ - eclipse.org]
+- https://www.eclipse.org/aspectj/doc/released/devguide/index.html[The AspectJtm Development Environment Guide - eclipse.org]
+- https://en.wikipedia.org/wiki/Aspect-oriented_programming[Aspect-oriented programming - Wikipedia]
+- https://en.wikipedia.org/wiki/AspectJ[AspectJ - Wikipedia]
+- https://en.wikipedia.org/wiki/Cross-cutting_concern[Cross-Cutting Concern - Wikipedia]
+- https://www.baeldung.com/aspectj[Intro to AspectJ - Baeldung]
